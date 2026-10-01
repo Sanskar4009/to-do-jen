@@ -1,45 +1,8 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environments
-.venv/
-venv/
-ENV/
-env/
-
-# Environment variables
-.env
-.env.local
-
-# Testing and coverage
-.pytest_cache/
-.coverage
-htmlcov/
-
-# Terraform
-terraform/.terraform/
-.terraform/
-*.tfstate
-*.tfstate.*
-*.tfstate.backup
-terraform.tfvars
+﻿terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.*
 terraform/terraform.tfvars
 *.tfplan
-terraform/*.tfplan
-.terraform.lock.hcl
-
-# Security / Keys
-*.pem
-*.key
-*.id_rsa
-
-# IDE and OS
-.idea/
-.vscode/
-.DS_Store
-Thumbs.db
-
-# Docker logs
-*.log
+.env
+__pycache__/
+*.pyc

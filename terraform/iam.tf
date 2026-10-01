@@ -58,6 +58,18 @@ data "aws_iam_policy_document" "app_permissions" {
       aws_sns_topic.notifications.arn
     ]
   }
+
+  # S3 Operations scoped strictly to downloading the application deployment archive
+  statement {
+    sid    = "S3ArtifactReadAccess"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject"
+    ]
+    resources = [
+      "${aws_s3_bucket.app_artifacts.arn}/*"
+    ]
+  }
 }
 
 # Create IAM Policy

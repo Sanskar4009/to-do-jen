@@ -12,10 +12,10 @@ echo "[$(date)] Starting CloudTodo EC2 Initialization..."
 echo "[$(date)] Updating operating system packages..."
 if command -v dnf &>/dev/null; then
     dnf update -y
-    dnf install -y docker git curl
+    dnf install -y docker git tar gzip awscli
 elif command -v apt-get &>/dev/null; then
     apt-get update -y
-    apt-get install -y docker.io git curl
+    apt-get install -y docker.io git tar gzip awscli
 fi
 
 # 2. Start and enable Docker service
@@ -35,7 +35,7 @@ cd "$APP_DIR"
 REPO_URL="${app_repository_url}"
 CLONE_SUCCESS=false
 
-# 4. Clone Application Repository if accessible
+# 4. Clone Application Repository if a valid custom URL is provided
 if [ -n "$REPO_URL" ] && [[ "$REPO_URL" != *"YOUR_USERNAME"* ]]; then
     echo "[$(date)] Cloning repository from $REPO_URL..."
     if git clone "$REPO_URL" repo_temp; then
@@ -43,44 +43,16 @@ if [ -n "$REPO_URL" ] && [[ "$REPO_URL" != *"YOUR_USERNAME"* ]]; then
         rm -rf repo_temp
         CLONE_SUCCESS=true
         echo "[$(date)] Successfully cloned repository."
-    else
-        echo "[$(date)] Git clone failed. Falling back to self-contained bootstrap..."
     fi
 fi
 
-# 5. If clone failed or placeholder URL was provided, bootstrap self-contained app directly
+# 5. Fallback: Download application package from S3
 if [ "$CLONE_SUCCESS" = false ]; then
-    echo "[$(date)] Creating application files locally on instance..."
-    mkdir -p "$APP_DIR/app/templates" "$APP_DIR/app/static/css" "$APP_DIR/app/static/js"
-
-    # Write requirements.txt
-    cat <<'EOF' > "$APP_DIR/requirements.txt"
-Flask==3.0.3
-boto3==1.34.131
-botocore==1.34.131
-gunicorn==22.0.0
-python-dotenv==1.0.1
-EOF
-
-    # Write Dockerfile
-    cat <<'EOF' > "$APP_DIR/Dockerfile"
-FROM python:3.11-slim
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=5000
-WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY app/ ./app/
-COPY run.py .
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-EXPOSE 5000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD curl -f http://localhost:5000/ || exit 1
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "run:app"]
-EOF
-
-    # If local source files exist in the deploy directory, they are present; otherwise we clone from GitHub
-    echo "[$(date)] Application structure created."
+    echo "[$(date)] Downloading application package from S3 (${s3_bucket})..."
+    aws s3 cp "s3://${s3_bucket}/app.tar.gz" "$APP_DIR/app.tar.gz" --region "${aws_region}"
+    tar -xzf "$APP_DIR/app.tar.gz" -C "$APP_DIR/"
+    rm -f "$APP_DIR/app.tar.gz"
+    echo "[$(date)] Application package extracted successfully."
 fi
 
 # 6. Build and launch Docker Container

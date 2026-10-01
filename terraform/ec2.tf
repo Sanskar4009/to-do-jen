@@ -52,6 +52,7 @@ resource "aws_instance" "app" {
     sns_topic_arn      = aws_sns_topic.notifications.arn
     app_repository_url = var.app_repository_url
     app_port           = var.app_port
+    s3_bucket          = aws_s3_bucket.app_artifacts.id
   })
 
   user_data_replace_on_change = true
