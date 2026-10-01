@@ -23,7 +23,7 @@ if (-not (Get-Command terraform -ErrorAction SilentlyContinue)) {
     exit 1
 }
 $TfVer = terraform -version | Select-Object -First 1
-Write-Host "✓ Found: $TfVer" -ForegroundColor Green
+Write-Host "[OK] Found: $TfVer" -ForegroundColor Green
 
 # 2. Check AWS CLI
 Write-Host ""
@@ -34,14 +34,14 @@ if (-not (Get-Command aws -ErrorAction SilentlyContinue)) {
     exit 1
 }
 $AwsVer = aws --version | Select-Object -First 1
-Write-Host "✓ Found: $AwsVer" -ForegroundColor Green
+Write-Host "[OK] Found: $AwsVer" -ForegroundColor Green
 
 # 3. Check AWS Authentication
 Write-Host ""
 Write-Host "[3/10] Verifying AWS credentials and authentication..." -ForegroundColor Yellow
 try {
-    $Identity = aws sts get-caller-identity --output text --query '[Account,Arn]'
-    Write-Host "✓ Authenticated as: $Identity" -ForegroundColor Green
+    $Identity = aws sts get-caller-identity --output text --query "[Account,Arn]"
+    Write-Host "[OK] Authenticated as: $Identity" -ForegroundColor Green
 } catch {
     Write-Host "[ERROR] Unable to authenticate with AWS." -ForegroundColor Red
     Write-Host "Please run 'aws configure' or set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY." -ForegroundColor White
@@ -58,10 +58,10 @@ if (-not (Test-Path $TfVarsFile)) {
     Write-Host "[WARNING] Configuration file '$TfVarsFile' not found!" -ForegroundColor Yellow
     Write-Host "Creating 'terraform.tfvars' from '$TfVarsExample'..." -ForegroundColor White
     Copy-Item $TfVarsExample $TfVarsFile
-    Write-Host "✓ Created: $TfVarsFile" -ForegroundColor Green
+    Write-Host "[OK] Created: $TfVarsFile" -ForegroundColor Green
     Write-Host "Please review and customize $TfVarsFile (especially notification_email and app_repository_url) if desired." -ForegroundColor Yellow
 } else {
-    Write-Host "✓ Found configuration file: $TfVarsFile" -ForegroundColor Green
+    Write-Host "[OK] Found configuration file: $TfVarsFile" -ForegroundColor Green
 }
 
 Set-Location $TerraformDir
