@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CloudTodo - Terraform-automated modern cloud To-Do application powered by AWS DynamoDB, Amazon SNS, and Docker.">
+    <title>{% block title %}CloudTodo | Cloud-Powered Task Manager{% endblock %}</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☁️</text></svg>">
+</head>
+<body>
+    <!-- Background Glow Effects -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <div class="app-wrapper">
+        <!-- Top Navigation Bar -->
+        <header class="navbar">
+            <div class="nav-container">
+                <a href="{{ url_for('main.index') }}" class="nav-brand" id="brand-link">
+                    <div class="brand-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                            <polyline points="9 11 12 14 22 4"/>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-title">CloudTodo</span>
+                        <span class="brand-subtitle">Cloud-Powered Task Manager</span>
+                    </div>
+                </a>
+
+                <div class="nav-pills">
+                    <div class="pill pill-aws" title="Database: Amazon DynamoDB">
+                        <span class="dot dot-dynamo"></span>
+                        <span>DynamoDB</span>
+                    </div>
+                    <div class="pill pill-sns" title="Notifications: Amazon SNS">
+                        <span class="dot dot-sns"></span>
+                        <span>Amazon SNS</span>
+                    </div>
+                    <div class="pill pill-tf" title="Infrastructure as Code: Terraform">
+                        <span class="dot dot-tf"></span>
+                        <span>Terraform</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <div class="content-container">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flash-container" id="flash-container">
+                            {% for category, message in messages %}
+                                <div class="flash-alert flash-{{ category }}" role="alert">
+                                    <div class="flash-icon">
+                                        {% if category == 'success' %}
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                        {% elif category == 'danger' %}
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                        {% elif category == 'warning' %}
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                        {% else %}
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flash-body">{{ message }}</div>
+                                    <button type="button" class="flash-close" onclick="this.parentElement.remove()" aria-label="Close notification">&times;</button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-container">
+                <p class="footer-text">
+                    <strong>CloudTodo</strong> • Production Cloud & DevOps Architecture
+                </p>
+                <div class="footer-tags">
+                    <span class="tag">AWS EC2</span>
+                    <span class="tag">DynamoDB</span>
+                    <span class="tag">Amazon SNS</span>
+                    <span class="tag">Terraform</span>
+                    <span class="tag">Docker</span>
+                    <span class="tag">Flask 3.0</span>
+                    <span class="tag">Gunicorn</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

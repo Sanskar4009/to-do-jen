@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}500 - Internal Server Error | CloudTodo{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-card">
+        <div class="error-code-badge error-code-500">500</div>
+        <h1 class="error-title">Internal Server Error</h1>
+        <p class="error-desc">An unexpected error occurred while communicating with the cloud services. Please check AWS DynamoDB and SNS connectivity or try again later.</p>
+        <div class="error-actions">
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"/>
+                    <polyline points="12 19 5 12 12 5"/>
+                </svg>
+                <span>Return to Dashboard</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

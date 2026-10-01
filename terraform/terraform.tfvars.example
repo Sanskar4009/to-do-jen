@@ -1,0 +1,44 @@
+# ============================================================
+# CloudTodo - Terraform Variable Configuration Example
+# Copy this file to terraform.tfvars and customize for your environment
+# ============================================================
+
+# Target AWS Region
+aws_region = "us-east-1"
+
+# Project and Environment Naming
+project_name = "cloudtodo"
+environment  = "dev"
+
+# Compute (EC2) Configuration
+instance_type = "t2.micro"
+
+# Leave ami_id empty to automatically query the latest Amazon Linux 2023 AMI
+ami_id = ""
+
+# Key Pair Name for SSH access (optional - leave blank if not using SSH key)
+key_name = ""
+
+# Networking (VPC & Subnet)
+vpc_cidr          = "10.0.0.0/16"
+subnet_cidr       = "10.0.1.0/24"
+availability_zone = "us-east-1a"
+
+# Security: Restrict SSH to your IP for production (e.g., "203.0.113.25/32")
+allowed_ssh_cidr = "0.0.0.0/0"
+
+# Application Git Repository URL for EC2 bootstrapping
+app_repository_url = "https://github.com/YOUR_USERNAME/cloudtodo.git"
+
+# DynamoDB Configuration
+dynamodb_table_name = "cloudtodo-tasks"
+
+# Amazon SNS Configuration
+sns_topic_name = "cloudtodo-notifications"
+
+# Email address to receive task notifications (e.g. task created, completed, deleted)
+# AWS will send a subscription confirmation email which you must confirm!
+notification_email = "your-email@example.com"
+
+# Application Web Port
+app_port = 5000

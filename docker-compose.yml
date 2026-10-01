@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cloudtodo-web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - PORT=5000
+      - SECRET_KEY=local-dev-secret-key-12345
+      - AWS_REGION=us-east-1
+      - DYNAMODB_TABLE=cloudtodo-tasks
+      - SNS_TOPIC_ARN=${SNS_TOPIC_ARN:-}
+      # Uncomment the following line if using local DynamoDB container below:
+      # - DYNAMODB_ENDPOINT_URL=http://local-dynamodb:8000
+      # - AWS_ACCESS_KEY_ID=mock_access_key
+      # - AWS_SECRET_ACCESS_KEY=mock_secret_key
+    env_file:
+      - path: .env
+        required: false
+
+  # Optional local DynamoDB container for testing without real AWS infrastructure
+  # local-dynamodb:
+  #   image: amazon/dynamodb-local:latest
+  #   container_name: cloudtodo-local-dynamodb
+  #   ports:
+  #     - "8000:8000"
+  #   command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"

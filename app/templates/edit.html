@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Task | CloudTodo{% endblock %}
+
+{% block content %}
+<div class="edit-page-container">
+    <div class="breadcrumb-bar">
+        <a href="{{ url_for('main.index') }}" class="back-link">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+            </svg>
+            <span>Back to Dashboard</span>
+        </a>
+    </div>
+
+    <div class="edit-card">
+        <div class="card-header">
+            <div class="card-title-group">
+                <h2 class="card-title">Edit Task</h2>
+                <p class="card-subtitle">Updating this task will synchronize changes to DynamoDB and publish an SNS notification.</p>
+            </div>
+            <div class="card-header-badge">
+                {% if task.completed %}
+                    <span class="badge badge-success">Completed</span>
+                {% else %}
+                    <span class="badge badge-amber">Pending</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <form action="{{ url_for('main.edit_task', task_id=task.task_id) }}" method="POST" class="edit-form" id="edit-task-form">
+            <div class="form-group">
+                <label for="task_name" class="form-label">Task Name</label>
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        name="task_name"
+                        id="task_name"
+                        class="task-input"
+                        value="{{ task.task_name }}"
+                        required
+                        maxlength="250"
+                        autofocus
+                    >
+                </div>
+                <div class="input-hints">
+                    <span>Task description must be between 1 and 250 characters.</span>
+                    <span id="char-counter">{{ task.task_name|length }} / 250</span>
+                </div>
+            </div>
+
+            <!-- Task Metadata Information Box -->
+            <div class="metadata-box">
+                <div class="meta-row">
+                    <span class="meta-label">Task ID:</span>
+                    <span class="meta-val font-mono">{{ task.task_id }}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Created At:</span>
+                    <span class="meta-val">{{ task.created_at | format_iso }}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Last Updated:</span>
+                    <span class="meta-val">{{ task.updated_at | format_iso }}</span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btn-save-task">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/>
+                        <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    <span>Save Changes</span>
+                </button>
+                <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
