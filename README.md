@@ -39,6 +39,7 @@
   - [Linux/macOS Deployment](#linuxmacos-deployment)
   - [Testing](#testing)
   - [Jenkins CI/CD](#jenkins-cicd)
+  - [Permanent Elastic IP & Cost Optimization](#permanent-elastic-ip--cost-optimization)
   - [Destroy Infrastructure](#destroy-infrastructure)
   - [Troubleshooting](#troubleshooting)
   - [Security](#security)
@@ -495,6 +496,38 @@ The repository includes a production-ready [Jenkinsfile](file:///e:/btech/devops
 6. **Docker Build**: Builds the production Docker image.
 7. **Docker Smoke Test**: Boots a test container on port 5001 and executes an HTTP healthcheck.
 8. **Deploy to AWS**: Applies Terraform changes using AWS credentials stored in Jenkins Credentials Manager (`aws-credentials-id`).
+
+---
+
+## Permanent Elastic IP & Cost Optimization
+
+CloudTodo allocates a dedicated AWS **Elastic IP (EIP)** associated with the EC2 instance. This guarantees that **the application's public IP address never changes**, so demo links on LinkedIn, resumes, and project portfolios stay permanently valid.
+
+### Pause Compute Costs ($0 EC2 Billing):
+When you are not demoing or actively testing the application, you can stop the EC2 instance to pause compute billing ($0.00/hour for compute):
+
+- **Windows**:
+  ```powershell
+  .\scripts\stop-ec2.ps1
+  ```
+- **Linux / macOS**:
+  ```bash
+  ./scripts/stop-ec2.sh
+  ```
+
+### Resume Instantly with the Same URL:
+Whenever you want to show the live project to an interviewer or recruiter, resume the instance:
+
+- **Windows**:
+  ```powershell
+  .\scripts\start-ec2.ps1
+  ```
+- **Linux / macOS**:
+  ```bash
+  ./scripts/start-ec2.sh
+  ```
+
+Because the Docker container is configured with `--restart unless-stopped`, the Flask web application boots automatically within 30–60 seconds, and the live application is reachable at the exact same public URL.
 
 ---
 

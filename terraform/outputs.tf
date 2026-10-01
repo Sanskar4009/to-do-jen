@@ -23,8 +23,8 @@ output "ec2_instance_id" {
 }
 
 output "ec2_public_ip" {
-  description = "Public IPv4 address of the EC2 application server"
-  value       = aws_instance.app.public_ip
+  description = "Static Public IPv4 address of the EC2 application server"
+  value       = aws_eip.app_eip.public_ip
 }
 
 output "ec2_public_dns" {
@@ -54,5 +54,5 @@ output "sns_topic_arn" {
 
 output "application_url" {
   description = "Direct web browser URL to access the deployed CloudTodo application"
-  value       = "http://${aws_instance.app.public_ip}:${var.app_port}"
+  value       = "http://${aws_eip.app_eip.public_ip}:${var.app_port}"
 }

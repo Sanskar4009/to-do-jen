@@ -1,0 +1,551 @@
+================================================================================
+CLOUDTODO (to-do-jen) - COMPREHENSIVE DEVOPS & CLOUD ARCHITECT INTERVIEW GUIDE
+================================================================================
+Project: CloudTodo - Terraform Automated Flask To-Do Application
+Author: Sanskar Sainik
+Repository: https://github.com/Sanskar4009/to-do-jen
+Tech Stack: AWS (EC2, VPC, IAM, DynamoDB, SNS, S3), Terraform, Docker, Python 3.11,
+            Flask 3.0, Gunicorn, Jenkins CI/CD, Pytest
+================================================================================
+
+
+TABLE OF CONTENTS:
+--------------------------------------------------------------------------------
+1. EXECUTIVE PROJECT SUMMARY (30-SECOND ELEVATOR PITCH)
+2. 2-MINUTE IN-DEPTH STAR METHOD WALKTHROUGH
+3. SYSTEM ARCHITECTURE & DATA FLOW (ASCII DIAGRAM)
+4. COMPREHENSIVE INTERVIEW QUESTIONS & ANSWERS:
+   - PART 1: HIGH-LEVEL ARCHITECTURE & DEVOPS PHILOSOPHY (Q1 - Q5)
+   - PART 2: AWS INFRASTRUCTURE & NETWORKING (Q6 - Q11)
+   - PART 3: SECURITY, IAM & CREDENTIAL MANAGEMENT (Q12 - Q17)
+   - PART 4: DOCKER & CONTAINERIZATION (Q18 - Q23)
+   - PART 5: TERRAFORM & INFRASTRUCTURE AS CODE (Q24 - Q30)
+   - PART 6: DYNAMODB & AMAZON SNS MESSAGING (Q31 - Q36)
+   - PART 7: CI/CD PIPELINES (JENKINS) & TESTING (Q37 - Q43)
+   - PART 8: SCALABILITY, RESILIENCY & TROUBLESHOOTING (Q44 - Q50)
+5. KEY NUMBERS & TECHNICAL METRICS CHEAT SHEET
+================================================================================
+
+
+================================================================================
+1. EXECUTIVE PROJECT SUMMARY (30-SECOND ELEVATOR PITCH)
+================================================================================
+"I built CloudTodo, a cloud-native task management application engineered around
+the principle of Zero-Touch Automated Infrastructure. 
+
+Rather than manually clicking through the AWS Console, I wrote modular Terraform 
+code that automatically provisions a complete, isolated AWS environment—including 
+a dedicated VPC, public subnet, route tables, internet gateway, least-privilege IAM 
+roles, a DynamoDB table, an SNS email alerting topic, and an EC2 instance. 
+
+The Python Flask backend is containerized with Docker running under a non-root user 
+and Gunicorn WSGI. I also implemented an 8-stage Jenkins CI/CD pipeline covering 
+automated Pytest test suites, Terraform validation, container smoke tests, and 
+deployment. The entire deployment is turnkey—anyone can clone the repository and 
+deploy the full stack with a single command."
+
+
+================================================================================
+2. 2-MINUTE IN-DEPTH STAR METHOD WALKTHROUGH
+================================================================================
+SITUATION (The Problem):
+"In many engineering organizations, cloud infrastructure is deployed manually 
+through 'ClickOps' in the AWS Console. This creates significant risks: configuration 
+drift, human error, hardcoded AWS credentials, and environments that cannot be 
+reliably audited or reproduced."
+
+TASK (The Objective):
+"My objective was to design and deploy a production-grade, fault-tolerant web 
+service where 100% of the AWS infrastructure is codified in Terraform, credentials 
+are zero-trust, and deployment is fully automated across local, CI/CD, and cloud 
+environments."
+
+ACTION (What I Engineered):
+"1. Infrastructure as Code: Authored pure HashiCorp Terraform modules to build an 
+   isolated VPC (10.0.0.0/16), public subnet, and security groups.
+ 2. Database & Messaging: Integrated serverless Amazon DynamoDB with Pay-Per-Request 
+   billing for single-digit millisecond latency, and Amazon SNS for real-time 
+   lifecycle notifications.
+ 3. Zero-Credential Security: Eliminated static AWS keys completely. EC2 assumes an 
+   IAM Role via an Instance Profile, obtaining temporary STS tokens. Policies are 
+   strictly scoped to resource ARNs without wildcards.
+ 4. Resilient Architecture: Decoupled database persistence from notifications. If 
+   SNS encounters latency or failure, the DynamoDB write still succeeds and the 
+   error is safely logged without breaking the user experience.
+ 5. Containerization: Dockerized the app using python:3.11-slim, Gunicorn WSGI, 
+   container health checks, and a dedicated unprivileged user (appuser).
+ 6. CI/CD & Testing: Created a declarative Jenkinsfile with 8 stages and authored 
+   28 Pytest tests with 100% mocked AWS services for fast offline testing."
+
+RESULT (The Impact):
+"The entire cloud stack can be stood up from scratch in under 3 minutes with a 
+single PowerShell or Bash script, zero manual AWS Console setup, zero credential 
+leaks, and 100% test pass rate in CI/CD."
+
+
+================================================================================
+3. SYSTEM ARCHITECTURE & DATA FLOW
+================================================================================
+
+                        [ USER WEB BROWSER ]
+                                 │
+                                 │  HTTP Request (Port 5000)
+                                 ▼
+         ┌────────────────────────────────────────────────────────┐
+         │ AWS VIRTUAL PRIVATE CLOUD (VPC: 10.0.0.0/16)           │
+         │                                                        │
+         │   ┌────────────────────────────────────────────────┐   │
+         │   │ PUBLIC SUBNET (10.0.1.0/24)                    │   │
+         │   │                                                │   │
+         │   │  [ EC2 Instance: t3.micro (Amazon Linux 2023) ]│   │
+         │   │   ├── IAM Instance Profile (STS Temp Tokens)   │   │
+         │   │   └── Docker Container Engine                  │   │
+         │   │        └── [ Docker Container: cloudtodo-app ] │   │
+         │   │             • python:3.11-slim                 │   │
+         │   │             • Non-root User: appuser (UID 1000)│   │
+         │   │             • Gunicorn WSGI (Workers: 2, Th: 4)│   │
+         │   │             • Flask 3.0 Application            │   │
+         │   └────────────────────────────────────────────────┘   │
+         └────────────────────────────────────────────────────────┘
+                       │                         │
+            Boto3 Write│              Boto3 Event│
+            (DynamoDB) │              (Publish)  │
+                       ▼                         ▼
+            ┌──────────────────────┐  ┌───────────────────────┐
+            │   Amazon DynamoDB    │  │      Amazon SNS       │
+            │ (cloudtodo-tasks)    │  │(cloudtodo-notification│
+            │ • PAY_PER_REQUEST    │  └───────────────────────┘
+            │ • Partition Key: UUID│              │
+            └──────────────────────┘              │ Email Protocol
+                                                  ▼
+                                         [ SUBSCRIBER INBOX ]
+
+
+================================================================================
+4. COMPREHENSIVE INTERVIEW QUESTIONS & ANSWERS
+================================================================================
+
+--------------------------------------------------------------------------------
+PART 1: HIGH-LEVEL ARCHITECTURE & DEVOPS PHILOSOPHY
+--------------------------------------------------------------------------------
+
+Q1: What problem does this project solve?
+A1: It eliminates manual cloud provisioning ("ClickOps") and configuration drift. 
+    By defining all networking, compute, storage, security, and notification 
+    components in declarative Terraform code, the entire production environment 
+    can be spun up, updated, or torn down reproducibly in a single command.
+
+Q2: Walk me through the request lifecycle when a user creates a task.
+A2: 1. User submits the task form on the browser (POST /add).
+    2. Flask validates the input (whitespace trimming, 1-250 characters).
+    3. Flask calls dynamodb.py to write the item to DynamoDB using Boto3.
+    4. Boto3 authenticates using temporary STS credentials from the EC2 IAM Role.
+    5. DynamoDB stores the task with a UUID and ISO 8601 UTC timestamp.
+    6. Upon DynamoDB write success, Flask calls sns_service.py to publish an 
+       event to Amazon SNS.
+    7. SNS asynchronously delivers an email alert to confirmed subscribers.
+    8. Flask sets a success flash message and redirects the user to GET /.
+
+Q3: What design pattern did you use for the Flask application?
+A3: I used the Application Factory pattern (`create_app()`) combined with Flask 
+    Blueprints. This decouples configuration, route handlers, error handlers, and 
+    database services into separate modules (config.py, routes.py, dynamodb.py, 
+    sns_service.py, utils.py), making the codebase easy to maintain and test.
+
+Q4: What is the core DevOps philosophy demonstrated in this project?
+A4: Shift-Left Testing, Infrastructure as Code (IaC), Least-Privilege Security, 
+    and Disposable/Immutable Infrastructure. No manual server configuration, no 
+    static credentials, and every change is validated via CI/CD before deployment.
+
+Q5: Why did you choose Python Flask instead of Django or FastAPI?
+A5: Flask is lightweight, unopinionated, and ideal for microservices and cloud-
+    native applications where you want direct, granular control over AWS SDK 
+    integrations (Boto3) without the heavyweight ORM overhead of Django.
+
+
+--------------------------------------------------------------------------------
+PART 2: AWS INFRASTRUCTURE & NETWORKING
+--------------------------------------------------------------------------------
+
+Q6: Describe the networking topology provisioned by your Terraform code.
+A6: I provisioned:
+    - 1 Dedicated VPC with CIDR 10.0.0.0/16, enabling DNS hostnames and support.
+    - 1 Public Subnet with CIDR 10.0.1.0/24 in Availability Zone us-east-1a with 
+      auto-assigned public IPs.
+    - 1 Internet Gateway attached to the VPC to enable outbound/inbound internet.
+    - 1 Public Route Table directing 0.0.0.0/0 traffic to the Internet Gateway.
+    - Route table association connecting the public subnet to the route table.
+
+Q7: How are Security Groups configured for the EC2 instance?
+A7: The EC2 Security Group enforces strict ingress rules:
+    - Port 5000 (Flask Web App): Open to 0.0.0.0/0 for public web access.
+    - Port 80 (HTTP): Open to 0.0.0.0/0.
+    - Port 22 (SSH): Restricted to `allowed_ssh_cidr` (configurable in tfvars).
+    - Egress: Outbound traffic is permitted on all ports (0.0.0.0/0) to allow 
+      package downloads, Docker image pulls, and AWS API calls.
+
+Q8: Which EC2 instance type and AMI did you choose and why?
+A8: I selected `t3.micro` running Amazon Linux 2023. `t3.micro` features 2 vCPUs 
+    and 1GB RAM, powered by AWS Nitro System, and is eligible under the AWS Free Tier. 
+    Amazon Linux 2023 was queried dynamically using Terraform's `aws_ami` data 
+    source to ensure the latest secure kernel and security patches.
+
+Q9: What happens during the EC2 cloud-init (user_data) bootstrap process?
+A9: When the instance starts, `user_data.sh` executes as root:
+    1. Updates system packages using `dnf update -y`.
+    2. Installs Docker, Git, Tar, Gzip, and the AWS CLI.
+    3. Starts and enables the Docker daemon.
+    4. Downloads the application deployment package from S3 (or clones from Git).
+    5. Builds the production Docker image.
+    6. Launches the container with `--restart unless-stopped` and passes dynamic 
+       environment variables (AWS_REGION, DYNAMODB_TABLE, SNS_TOPIC_ARN).
+
+Q10: Why did you use an S3 bucket in the Terraform deployment?
+A10: AWS EC2 API limits base64-encoded user_data scripts to 25,600 bytes. To make 
+     the deployment 100% self-contained without requiring manual Git pushes, 
+     Terraform creates a private S3 bucket, uploads the application package 
+     (`app.tar.gz`), and the EC2 user_data script downloads and extracts it in 
+     seconds via IAM role permissions.
+
+Q11: How do you verify that the EC2 bootstrap script executed successfully?
+A11: By connecting via SSH and inspecting the cloud-init log:
+     `sudo tail -f /var/log/user-data.log`
+     and verifying the running container with `docker ps`.
+
+
+--------------------------------------------------------------------------------
+PART 3: SECURITY, IAM & CREDENTIAL MANAGEMENT
+--------------------------------------------------------------------------------
+
+Q12: How does the application authenticate with AWS DynamoDB and SNS on EC2?
+A12: It uses an **EC2 IAM Role and Instance Profile**. When Boto3 initializes, it 
+     automatically queries the AWS EC2 Instance Metadata Service (IMDSv2) at 
+     `http://169.254.169.254/latest/meta-data/iam/security-credentials/` to obtain 
+     short-lived, auto-rotating AWS STS session tokens. No static AWS keys are used.
+
+Q13: How did you implement the Principle of Least Privilege in IAM?
+A13: I created a dedicated IAM Policy attached to the EC2 role with tightly scoped 
+     permissions:
+     - DynamoDB: Allowed only `GetItem`, `PutItem`, `UpdateItem`, `DeleteItem`, 
+       `Scan`, `Query`, `DescribeTable` strictly scoped to the table ARN.
+     - SNS: Allowed only `sns:Publish` strictly scoped to the topic ARN.
+     - S3: Allowed only `s3:GetObject` strictly scoped to the artifact bucket ARN.
+     - Zero wildcard `Resource: "*"` statements are used for data actions.
+
+Q14: Where is the Flask SECRET_KEY stored in production?
+A14: It is injected as an environment variable into the Docker container at runtime. 
+     It is never hardcoded in source code, Dockerfiles, or committed to GitHub.
+
+Q15: How does your container design adhere to security best practices?
+A15: 1. Uses minimal base image (`python:3.11-slim`) to minimize CVE vulnerability surface.
+     2. Runs under a dedicated unprivileged user (`appuser`, UID 1000) instead of root.
+     3. Docker container has an isolated root filesystem.
+     4. Health check endpoint validates container responsiveness without external privileges.
+
+Q16: How do you prevent sensitive data from leaking into application logs?
+A16: In `dynamodb.py` and `sns_service.py`, logs record only operation status, 
+     task IDs, and message IDs. AWS credentials, authorization headers, and 
+     private session tokens are explicitly excluded from log statements.
+
+Q17: What is in your .gitignore file to prevent security accidents?
+A17: `.env`, `*.tfstate`, `*.tfstate.*`, `terraform.tfvars`, `*.tfplan`, `*.pem`, 
+     `*.key`, `__pycache__/`, `.venv/`, and `.pytest_cache/`.
+
+
+--------------------------------------------------------------------------------
+PART 4: DOCKER & CONTAINERIZATION
+--------------------------------------------------------------------------------
+
+Q18: What is the role of Docker in this architecture?
+A18: Docker provides **environment parity and process isolation**. It guarantees 
+     that the application runs identically on a local MacBook/Windows laptop, 
+     inside the Jenkins CI runner, and in production on AWS EC2. It prevents host 
+     pollution and provides auto-restart capabilities.
+
+Q19: Explain the key directives in your Dockerfile.
+A19: - `FROM python:3.11-slim`: Lightweight, secure Debian-based Python image.
+     - `ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1`: Prevents .pyc clutter 
+       and flushes logs immediately to stdout/stderr.
+     - `COPY requirements.txt . && RUN pip install --no-cache-dir`: Caches pip 
+       dependencies layer to speed up rebuilds.
+     - `RUN useradd -m -u 1000 appuser && USER appuser`: Drops root privileges.
+     - `EXPOSE 5000`: Documents port mapping.
+     - `HEALTHCHECK`: Periodically runs `curl -f http://localhost:5000/ || exit 1`.
+     - `CMD ["gunicorn", "--bind", "0.0.0.0:5000", ... "run:app"]`: Production WSGI.
+
+Q20: Why use Gunicorn instead of the default Flask development server?
+A20: The default Flask server (`app.run()`) is single-threaded, intended only for 
+     development, and crashes or blocks under concurrent requests. Gunicorn is a 
+     production-grade WSGI HTTP server using a pre-fork worker model (2 workers, 
+     4 threads) to handle concurrent traffic, worker timeouts, and connection pooling.
+
+Q21: What is the difference between Docker and Docker Compose in your project?
+A21: - `Dockerfile` defines how the single application image is built.
+     - `docker-compose.yml` orchestrates the local multi-container environment, 
+       mapping ports, mounting environment files, and optionally running local 
+       DynamoDB (`amazon/dynamodb-local`) for offline development.
+
+Q22: How does Docker handle self-healing when a container crashes?
+A22: The container is launched with `--restart unless-stopped`. If Python throws an 
+     unhandled fatal exception or encounters an Out-Of-Memory (OOM) kill, the 
+     Docker daemon immediately restarts the container within 2 seconds without 
+     requiring EC2 instance reboot.
+
+Q23: How do you pass environment variables into the Docker container on EC2?
+A23: Through the `-e` flags in the `docker run` command inside `user_data.sh`:
+     `-e AWS_REGION="${aws_region}" -e DYNAMODB_TABLE="${dynamodb_table}" ...`
+
+
+--------------------------------------------------------------------------------
+PART 5: TERRAFORM & INFRASTRUCTURE AS CODE
+--------------------------------------------------------------------------------
+
+Q24: What is Infrastructure as Code (IaC) and why is it important here?
+A24: IaC is the practice of managing and provisioning computing infrastructure 
+     through machine-readable definition files rather than manual configuration. 
+     In CloudTodo, Terraform ensures that the entire environment can be version-
+     controlled, peer-reviewed, audited, and deployed identically across dev, 
+     staging, and prod.
+
+Q25: Explain the structure of your Terraform codebase.
+A25: I organized the configuration into modular, single-responsibility files:
+     - `provider.tf`: Configures AWS provider and default resource tags.
+     - `variables.tf`: Parameter definitions (region, CIDRs, instance type).
+     - `locals.tf`: Computed naming prefixes and common tags.
+     - `networking.tf`: VPC, public subnet, IGW, route table, association.
+     - `security.tf`: EC2 security groups with ingress/egress rules.
+     - `iam.tf`: EC2 IAM role, policy, and instance profile.
+     - `dynamodb.tf`: Table schema and on-demand billing.
+     - `sns.tf`: Notification topic and email subscription.
+     - `s3.tf`: Artifact bucket and package upload.
+     - `ec2.tf`: EC2 instance with dynamic AMI lookup and templated user_data.
+     - `outputs.tf`: Exports application URL, public IP, and resource ARNs.
+
+Q26: What Terraform state management did you implement?
+A26: For Version 1, local state (`terraform.tfstate`) is used, which is strictly 
+     git-ignored. For enterprise multi-engineer teams, I documented migration to 
+     an **S3 Remote Backend** with **DynamoDB State Locking** to prevent concurrent 
+     state corruption.
+
+Q27: How do your deployment scripts (`deploy.ps1` / `deploy.sh`) work?
+A27: The scripts execute an 11-step automated workflow:
+     1. Verifies Terraform and AWS CLI binaries.
+     2. Authenticates with AWS (`aws sts get-caller-identity`).
+     3. Checks or initializes `terraform.tfvars`.
+     4. Runs `terraform init -upgrade`.
+     5. Checks formatting (`terraform fmt`).
+     6. Validates syntax (`terraform validate`).
+     7. Generates an execution plan (`terraform plan -out=tfplan`).
+     8. Prompts the engineer for explicit confirmation (`yes`).
+     9. Applies the plan (`terraform apply tfplan`).
+     10. Displays the live Application URL and resource details.
+
+Q28: How does the destroy script (`destroy.ps1` / `destroy.sh`) safeguard against accidental deletion?
+A28: It prints a clear red warning detailing all resources that will be terminated 
+     and requires the user to explicitly type the exact word `destroy` before 
+     executing `terraform destroy -auto-approve`.
+
+Q29: How did you solve the dynamic AMI requirement across different AWS regions?
+A29: Instead of hardcoding AMI IDs (which differ per region), I used an `aws_ami` 
+     data source filtered by `name = ["al2023-ami-2023.*-x86_64"]` and 
+     `owners = ["amazon"]`. If the user leaves `ami_id` empty, Terraform automatically 
+     finds the latest official Amazon Linux 2023 AMI in whatever region is targeted.
+
+Q30: What is the purpose of `user_data_replace_on_change = true` in ec2.tf?
+A30: By default, changes to user_data do not trigger EC2 re-creation in Terraform. 
+     Setting `user_data_replace_on_change = true` ensures that whenever the 
+     bootstrap script or application payload changes, Terraform automatically 
+     replaces the instance with the updated bootstrap logic.
+
+
+--------------------------------------------------------------------------------
+PART 6: DYNAMODB & AMAZON SNS MESSAGING
+--------------------------------------------------------------------------------
+
+Q31: Why did you choose DynamoDB over Amazon RDS (PostgreSQL/MySQL)?
+A31: 1. Access Pattern: Task operations are simple key-value lookups by `task_id` 
+        (GetItem, PutItem, UpdateItem, DeleteItem). Relational joins are unnecessary.
+     2. Cost: DynamoDB `PAY_PER_REQUEST` billing mode charges $0 when idle. RDS 
+        charges per hour even when no traffic exists.
+     3. Scalability: DynamoDB automatically scales horizontally without needing 
+        database migration scripts, connection pooling, or maintenance windows.
+
+Q32: Explain your DynamoDB table schema and data types.
+A32: - Table Name: `cloudtodo-tasks`
+     - Partition Key: `task_id` (Type: S / String, UUID v4)
+     - Attributes:
+       * `task_name` (String): Cleaned task description
+       * `completed` (Boolean): False (pending) or True (completed)
+       * `created_at` (String): ISO 8601 UTC timestamp
+       * `updated_at` (String): ISO 8601 UTC timestamp
+
+Q33: What is the purpose of Amazon SNS in this application?
+A33: Amazon Simple Notification Service (SNS) provides pub/sub messaging. When 
+     tasks are created, updated, completed, reopened, or deleted, Flask publishes 
+     a notification message to the topic. SNS then fans out email notifications 
+     to all confirmed subscribers.
+
+Q34: How does SNS email subscription confirmation work?
+A34: AWS requires explicit opt-in for email endpoints to prevent spam. When 
+     Terraform creates `aws_sns_topic_subscription`, AWS sends an email containing 
+     a "Confirm subscription" link. The subscription remains in `PendingConfirmation` 
+     state and will not receive alerts until the recipient clicks that link.
+
+Q35: What happens if DynamoDB succeeds but Amazon SNS fails?
+A35: **Fault Isolation**: The database write remains successful. In `routes.py`, 
+     the SNS publish call is wrapped in a try/except block. If SNS encounters 
+     an error, the failure is logged via Python's `logging.error()`, but no exception 
+     bubbles up to fail the HTTP request. Primary business transactions are never 
+     blocked by downstream notification issues.
+
+Q36: How does the application handle DynamoDB pagination?
+A36: In `dynamodb.py`, `get_tasks()` inspects `LastEvaluatedKey` in the scan response. 
+     If the dataset exceeds 1MB, it loops through paginated scans using 
+     `ExclusiveStartKey` until all tasks are collected, and then sorts them by 
+     `created_at` descending.
+
+
+--------------------------------------------------------------------------------
+PART 7: CI/CD PIPELINES (JENKINS) & TESTING
+--------------------------------------------------------------------------------
+
+Q37: Describe the stages of your Jenkins pipeline.
+A37: The declarative `Jenkinsfile` runs 8 automated stages:
+     1. Checkout: Pulls latest code from Git branch.
+     2. Setup Python & Virtualenv: Installs packages from `requirements-dev.txt`.
+     3. Run Tests: Executes `pytest tests/ -v` and generates JUnit XML reports.
+     4. Terraform Lint & Format: Runs `terraform fmt -check` to enforce style.
+     5. Terraform Validation: Runs `terraform init -backend=false` and `validate`.
+     6. Docker Build: Builds the image tagged with the Jenkins build number.
+     7. Docker Smoke Test: Starts a test container on port 5001 and tests HTTP 200.
+     8. Deploy to AWS: On main branch, runs `terraform apply -auto-approve` using 
+        credentials from Jenkins Credentials Manager (`aws-credentials-id`).
+
+Q38: How do your unit tests run without an AWS account or active credentials?
+A38: Using `unittest.mock` and `pytest-mock`. In `test_dynamodb.py` and `test_sns.py`, 
+     I mock Boto3 table resources, clients, and API responses (including ClientError 
+     exceptions). All 28 tests run 100% offline, fast, and with zero AWS costs.
+
+Q39: What test cases are covered in your Pytest suite?
+A39: - Routes (`test_routes.py`): GET /, POST /add, POST /complete, GET /edit, 
+       POST /edit, POST /delete, input validation errors, and 404 handler.
+     - DynamoDB (`test_dynamodb.py`): Item creation, sorting, updating, toggling, 
+       deleting, and ConditionalCheckFailedException handling.
+     - SNS (`test_sns.py`): Topic ARN validation, graceful handling of empty ARN, 
+       ClientError recovery, and message body formatting for all 5 event types.
+
+Q40: How does Jenkins securely access AWS credentials?
+A40: Using the Jenkins Credentials Binding Plugin (`withCredentials`). The AWS 
+     Access Key and Secret Key are stored in Jenkins Credentials Manager and 
+     injected as masked environment variables during the deploy stage. They are 
+     never printed in console logs.
+
+Q41: What happens if any test fails in Stage 3?
+A41: The pipeline halts immediately with a failure status. The Docker build and AWS 
+     deployment stages are skipped, preventing broken code from ever reaching 
+     the cloud server.
+
+Q42: What is the purpose of the Docker Smoke Test stage in Jenkins?
+A42: Unit tests test Python logic; the smoke test tests the **runtime container**. 
+     It starts the actual Docker container, validates that Gunicorn binds correctly 
+     to port 5000, and verifies that an HTTP request returns status 200 before 
+     deploying to production.
+
+Q43: What post-build actions are configured in the Jenkinsfile?
+A43: - `always`: Cleans the workspace (`cleanWs()`) and archives JUnit XML reports.
+     - `success`: Sends success notification.
+     - `failure`: Alerts the team to inspect build logs.
+
+
+--------------------------------------------------------------------------------
+PART 8: SCALABILITY, RESILIENCY & TROUBLESHOOTING
+--------------------------------------------------------------------------------
+
+Q44: How would you scale this architecture to handle 100,000 active users?
+A44: 1. Put an **Application Load Balancer (ALB)** in front to terminate TLS/HTTPS 
+        and distribute incoming traffic across multiple instances.
+     2. Move EC2 into an **Auto Scaling Group (ASG)** spanning at least 2 Availability 
+        Zones with target tracking policies (CPU > 70% or request count per target).
+     3. DynamoDB already scales automatically under `PAY_PER_REQUEST` mode.
+     4. Introduce an **ElastiCache (Redis)** layer to cache frequently queried tasks.
+     5. Move from standalone EC2 Docker hosting to **AWS ECS Fargate** for serverless 
+        container management with zero OS maintenance.
+
+Q45: How would you handle background email notifications under high load?
+A45: Instead of publishing directly to SNS within the Flask web worker thread, I 
+     would push events to an **Amazon SQS** queue (or Redis Celery queue) and have 
+     background worker containers consume messages and publish to SNS. This ensures 
+     HTTP response times remain under 20ms even if notification traffic spikes.
+
+Q46: How would you migrate Terraform state to enterprise multi-developer setup?
+A46: In `provider.tf`, configure an S3 remote backend with DynamoDB locking:
+     ```hcl
+     terraform {
+       backend "s3" {
+         bucket         = "my-company-terraform-state"
+         key            = "cloudtodo/terraform.tfstate"
+         region         = "us-east-1"
+         dynamodb_table = "terraform-state-locks"
+         encrypt        = true
+       }
+     }
+     ```
+     This prevents concurrent state overwrites and keeps state history versioned.
+
+Q47: If a user reports that the website is not reachable right after `terraform apply`, what is the cause?
+A47: EC2 instance launch takes ~15 seconds, but cloud-init (`user_data.sh`) runs 
+     asynchronously on the host to update OS packages (`dnf update`), install 
+     Docker, download the application, and build the container image. This typically 
+     requires 60 to 90 seconds. Once the container starts, port 5000 becomes 
+     immediately responsive.
+
+Q48: If a user reports they are not receiving task notification emails, how do you debug?
+A48: 1. Check SNS Subscription state in AWS Console or CLI:
+        `aws sns list-subscriptions-by-topic --topic-arn <arn>`
+        If status is `PendingConfirmation`, the recipient has not clicked the link.
+     2. Check spam / junk folder for `no-reply@sns.amazonaws.com`.
+     3. Verify EC2 IAM policy has `sns:Publish` permission for that topic ARN.
+
+Q49: How do you handle zero-downtime deployments with Docker on EC2?
+A49: For a single EC2 host, use blue/green container deployments (run new container 
+     on port 5001, test health, reload Nginx reverse proxy, stop old container). 
+     For enterprise, use an Application Load Balancer with ECS Fargate rolling updates.
+
+Q50: What were the most challenging bugs you solved while building this project?
+A50: 1. **AWS EC2 user_data size limit**: AWS limits base64-encoded user_data to 
+        25,600 bytes. When embedding code, the size exceeded this limit. I solved 
+        this cleanly by creating an S3 deployment bucket with Terraform, uploading 
+        a compressed `app.tar.gz`, and having user_data fetch it via IAM role.
+     2. **Windows PowerShell encoding**: Multi-byte Unicode characters (like `✓`) 
+        caused PowerShell 5.1's default ANSI parser to misinterpret quotation marks. 
+        I refactored the scripts to use standard cross-platform ASCII tokens (`[OK]`).
+     3. **AWS Free Tier instance type**: Newer AWS accounts require `t3.micro` for 
+        free tier eligibility rather than older `t2.micro`. I parameterized this 
+        and resolved it across all Terraform modules.
+     4. **Fixed Public IP & Cost Optimization**: Public IPs dynamically change when 
+        an EC2 instance stops and starts. To ensure my resume / portfolio links 
+        stay permanently valid while keeping compute costs at $0 when idle, I codified 
+        an AWS Elastic IP (`aws_eip`) attached to the instance, and engineered 
+        lifecycle scripts (`stop-ec2` and `start-ec2`) so the compute can be stopped 
+        at will and resumed in 30 seconds with zero IP change.
+
+
+================================================================================
+5. KEY NUMBERS & TECHNICAL METRICS CHEAT SHEET
+================================================================================
+- AWS Region: us-east-1 (N. Virginia)
+- Public Elastic IP: Fixed Static IPv4 (via AWS EIP)
+- VPC CIDR: 10.0.0.0/16 (65,536 private IPs)
+- Public Subnet CIDR: 10.0.1.0/24 (256 IPs)
+- EC2 Compute: t3.micro (2 vCPUs, 1GB RAM, Nitro system, gp3 encrypted 15GB SSD)
+- Application Port: 5000 (Internal & External)
+- Database: Amazon DynamoDB (On-Demand / PAY_PER_REQUEST, UUID partition key)
+- Messaging: Amazon SNS (Email protocol, fan-out architecture)
+- Base Container: python:3.11-slim (~150MB image size)
+- WSGI Server: Gunicorn (2 worker processes, 4 threads per worker)
+- Test Suite: 28 Unit & Integration tests in Pytest (100% offline via mocks)
+- Jenkins Pipeline: 8 Declarative stages (Checkout -> Deploy)
+- Deployment Speed: < 3 minutes for complete automated provisioning
+================================================================================
+END OF INTERVIEW PREPARATION GUIDE
+================================================================================

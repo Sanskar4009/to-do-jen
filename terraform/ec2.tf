@@ -67,3 +67,15 @@ resource "aws_instance" "app" {
     aws_sns_topic.notifications
   ]
 }
+
+# Static, permanent Elastic IP for the application server
+resource "aws_eip" "app_eip" {
+  instance = aws_instance.app.id
+  domain   = "vpc"
+
+  tags = {
+    Name = "${local.name_prefix}-static-ip"
+  }
+
+  depends_on = [aws_internet_gateway.main]
+}
