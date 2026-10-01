@@ -89,6 +89,12 @@ resource "aws_iam_role_policy_attachment" "app_attachment" {
   policy_arn = aws_iam_policy.app_policy.arn
 }
 
+# Attach AWS Systems Manager (SSM) Managed Policy for secure remote management
+resource "aws_iam_role_policy_attachment" "ssm_core" {
+  role       = aws_iam_role.app_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # EC2 Instance Profile to associate IAM Role with EC2
 resource "aws_iam_instance_profile" "app_profile" {
   name = "${local.name_prefix}-instance-profile"

@@ -69,6 +69,7 @@ echo "[$(date)] Launching CloudTodo container..."
 docker run -d \
     --name cloudtodo-app \
     --restart unless-stopped \
+    -p 80:5000 \
     -p ${app_port}:5000 \
     -e AWS_REGION="${aws_region}" \
     -e DYNAMODB_TABLE="${dynamodb_table}" \

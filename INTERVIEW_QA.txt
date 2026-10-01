@@ -4,6 +4,7 @@ CLOUDTODO (to-do-jen) - COMPREHENSIVE DEVOPS & CLOUD ARCHITECT INTERVIEW GUIDE
 Project: CloudTodo - Terraform Automated Flask To-Do Application
 Author: Sanskar Sainik
 Repository: https://github.com/Sanskar4009/to-do-jen
+Live Demo: http://cloudtodo.54.166.86.142.nip.io/ (or http://54.166.86.142/)
 Tech Stack: AWS (EC2, VPC, IAM, DynamoDB, SNS, S3), Terraform, Docker, Python 3.11,
             Flask 3.0, Gunicorn, Jenkins CI/CD, Pytest
 ================================================================================

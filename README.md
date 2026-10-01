@@ -9,6 +9,9 @@
 [![Flask](https://img.shields.io/badge/Flask-3.0-black?logo=flask)](https://flask.palletsprojects.com/)
 [![Jenkins](https://img.shields.io/badge/Jenkins-CI%2FCD-red?logo=jenkins)](https://www.jenkins.io/)
 
+> 🌐 **Live Demo Domain**: [http://cloudtodo.54.166.86.142.nip.io/](http://cloudtodo.54.166.86.142.nip.io/)  
+> 📍 **Permanent Static IP**: [http://54.166.86.142/](http://54.166.86.142/) (Standard Port 80, no port number required)
+
 ---
 
 ## Table of Contents
