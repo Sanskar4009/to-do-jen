@@ -25,6 +25,15 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Standard HTTPS Ingress
+  ingress {
+    description = "Standard HTTPS Traffic"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # Restricted SSH Ingress
   ingress {
     description = "Administrative SSH Access (Restricted CIDR)"
